@@ -1,7 +1,7 @@
 use async_openai::types::ChatCompletionRequestMessage;
 use async_openai::types::ChatCompletionResponseMessage;
 
-#[derive(Default)]
+#[derive(Clone, Debug, Default)]
 pub struct ChatMemory {
     /// ID of the model to use.
     ///
@@ -19,6 +19,8 @@ pub struct ChatMemory {
     /// Chat messages in memory.
     messages: Vec<ChatCompletionRequestMessage>,
 }
+
+const N: usize = 2048;
 
 impl ChatMemory {
     #[inline]
@@ -40,9 +42,26 @@ impl ChatMemory {
 
     #[inline]
     #[must_use]
+    pub fn len(&self) -> usize {
+        self.messages.len()
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
+        self.messages.is_empty()
+    }
+
+    #[inline]
+    #[must_use]
     pub fn messages(&self) -> &[ChatCompletionRequestMessage] {
-        // TODO: correct
-        self.as_ref()
+        let messages = match self.len() {
+            n if n < N => self.as_ref(),
+            n => &self.as_ref()[n - N..n],
+        };
+
+        // TODO: correct for token count
+        messages
     }
 }
 
