@@ -1,4 +1,5 @@
-use async_openai::types::{ChatCompletionRequestMessage, ChatCompletionResponseMessage};
+use async_openai::types::ChatCompletionRequestMessage;
+use async_openai::types::ChatCompletionResponseMessage;
 use tiktoken_rs::async_openai::get_chat_completion_max_tokens;
 
 #[derive(Clone, Debug, Default)]
@@ -18,6 +19,9 @@ pub struct ChatMemory {
 
     /// Chat messages in memory.
     messages: Vec<ChatCompletionRequestMessage>,
+
+    /// Index of the first message in the current context.
+    index: usize,
 }
 
 impl ChatMemory {
@@ -33,32 +37,16 @@ impl ChatMemory {
         self
     }
 
-    #[inline]
-    pub fn push(&mut self, message: impl Message) {
-        self.messages.push(message.message());
-    }
-
-    #[inline]
-    #[must_use]
-    pub fn len(&self) -> usize {
-        self.messages.len()
-    }
-
-    #[inline]
-    #[must_use]
-    pub fn is_empty(&self) -> bool {
-        self.messages.is_empty()
-    }
-
     /// Get the most recent messages that fit the model's context window.
     ///
     /// # Panics
-    /// If tokenizer for the specified model is not found or is not a supported chat model.
+    /// If tokenizer for the specified model is not found or is not a supported
+    /// chat model.
     #[inline]
     #[must_use]
     pub fn messages(&self) -> &[ChatCompletionRequestMessage] {
         let last = |n| {
-            let len = self.len();
+            let len = self.as_ref().len();
             let last = &self.as_ref()[len - n..len];
             debug_assert_eq!(last.len(), n);
             last
@@ -80,19 +68,11 @@ impl ChatMemory {
         );
         messages
     }
-}
 
-impl AsRef<[ChatCompletionRequestMessage]> for ChatMemory {
     #[inline]
-    fn as_ref(&self) -> &[ChatCompletionRequestMessage] {
-        &self.messages
-    }
-}
-
-impl AsMut<[ChatCompletionRequestMessage]> for ChatMemory {
-    #[inline]
-    fn as_mut(&mut self) -> &mut [ChatCompletionRequestMessage] {
-        &mut self.messages
+    pub fn push(&mut self, message: impl Message) {
+        self.messages.push(message.message());
+        self.index += 1;
     }
 }
 
@@ -102,8 +82,16 @@ where
 {
     #[inline]
     fn extend<T: IntoIterator<Item = M>>(&mut self, messages: T) {
-        self.messages
-            .extend(messages.into_iter().map(Message::message));
+        let messages = messages.into_iter().map(Message::message);
+        self.index += messages.size_hint().0;
+        self.messages.extend(messages);
+    }
+}
+
+impl AsRef<[ChatCompletionRequestMessage]> for ChatMemory {
+    #[inline]
+    fn as_ref(&self) -> &[ChatCompletionRequestMessage] {
+        &self.messages
     }
 }
 
