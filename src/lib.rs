@@ -83,12 +83,7 @@ impl IntoRequestMessage for async_openai::types::ChatCompletionResponseMessage {
         async_openai::types::ChatCompletionRequestMessage {
             role: self.role,
             content: self.content,
-            function_call: self.function_call.map(|fc| {
-                async_openai::types::FunctionCall {
-                    name: fc.name,
-                    arguments: fc.arguments,
-                }
-            }),
+            function_call: self.function_call,
 
             name: None,
         }

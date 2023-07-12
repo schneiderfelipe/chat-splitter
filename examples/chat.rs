@@ -1,6 +1,5 @@
 use std::error::Error;
 
-use async_openai::types::ChatCompletionRequestMessage;
 use async_openai::types::ChatCompletionRequestMessageArgs;
 use async_openai::types::CreateChatCompletionRequestArgs;
 use async_openai::types::Role;
@@ -12,6 +11,7 @@ use chat_memory::IntoRequestMessage;
 async fn main() -> Result<(), Box<dyn Error>> {
     let max_tokens = 512u16;
     let model = "gpt-3.5-turbo";
+
     let memory_manager = ChatMemoryManagerBuilder::default()
         .max_tokens(max_tokens)
         .model(model)
@@ -61,13 +61,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             "{}: Role: {}  Content: {:?}",
             choice.index, choice.message.role, choice.message.content
         );
-        messages.push(ChatCompletionRequestMessage {
-            role: choice.message.role,
-            content: choice.message.content,
-            function_call: choice.message.function_call,
-
-            name: None,
-        });
+        messages.push(choice.message.into_async_openai());
     }
 
     println!("{:#?}", memory_manager.messages(&messages)?);
