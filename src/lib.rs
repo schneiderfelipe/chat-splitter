@@ -1,5 +1,5 @@
-use async_openai::types::ChatCompletionRequestMessage;
-use async_openai::types::ChatCompletionResponseMessage;
+use async_openai::types::{ChatCompletionRequestMessage, ChatCompletionResponseMessage};
+use tiktoken_rs::async_openai::get_chat_completion_max_tokens;
 
 #[derive(Clone, Debug, Default)]
 pub struct ChatMemory {
@@ -14,13 +14,11 @@ pub struct ChatMemory {
     /// This is to ensure there's room for the model to generate a response
     /// given the trimmed context. See [`CreateChatCompletionRequestArgs.
     /// max_tokens`].
-    max_tokens: u16,
+    max_tokens: usize,
 
     /// Chat messages in memory.
     messages: Vec<ChatCompletionRequestMessage>,
 }
-
-const N: usize = 2048;
 
 impl ChatMemory {
     #[inline]
@@ -30,7 +28,7 @@ impl ChatMemory {
     }
 
     #[inline]
-    pub fn max_tokens(mut self, max_tokens: impl Into<u16>) -> Self {
+    pub fn max_tokens(mut self, max_tokens: impl Into<usize>) -> Self {
         self.max_tokens = max_tokens.into();
         self
     }
@@ -52,15 +50,34 @@ impl ChatMemory {
         self.messages.is_empty()
     }
 
+    /// Get the most recent messages that fit the model's context window.
+    ///
+    /// # Panics
+    /// If tokenizer for the specified model is not found or is not a supported chat model.
     #[inline]
     #[must_use]
     pub fn messages(&self) -> &[ChatCompletionRequestMessage] {
-        let messages = match self.len() {
-            n if n < N => self.as_ref(),
-            n => &self.as_ref()[n - N..n],
+        let last = |n| {
+            let len = self.len();
+            let last = &self.as_ref()[len - n..len];
+            debug_assert_eq!(last.len(), n);
+            last
         };
-
-        // TODO: correct for token count
+        let count = |n| {
+            let count =
+                get_chat_completion_max_tokens(&self.model, last(n)).expect("count is available");
+            println!("{n} messages with {count} tokens");
+            count
+        };
+        let mut n = 0;
+        while count(n) > self.max_tokens {
+            n += 1;
+        }
+        let messages = last(n);
+        debug_assert!(
+            get_chat_completion_max_tokens(&self.model, messages).expect("count is available")
+                > self.max_tokens
+        );
         messages
     }
 }
