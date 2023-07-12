@@ -1,19 +1,25 @@
 use std::error::Error;
 
+use async_openai::types::ChatCompletionRequestMessage;
 use async_openai::types::ChatCompletionRequestMessageArgs;
 use async_openai::types::CreateChatCompletionRequestArgs;
 use async_openai::types::Role;
 use async_openai::Client;
-use chat_memory::ChatMemory;
+use chat_memory::ChatMemoryManagerBuilder;
+use chat_memory::IntoRequestMessage;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     let max_tokens = 512u16;
     let model = "gpt-3.5-turbo";
-    let mut memory = ChatMemory::default().max_tokens(max_tokens).model(model);
+    let memory_manager = ChatMemoryManagerBuilder::default()
+        .max_tokens(max_tokens)
+        .model(model)
+        .build()?;
 
+    let mut messages = Vec::new();
     for _ in 0..1000 {
-        memory.extend([
+        messages.extend([
             ChatCompletionRequestMessageArgs::default()
                 .role(Role::System)
                 .content("You are a helpful assistant.")
@@ -36,7 +42,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let request = CreateChatCompletionRequestArgs::default()
         .max_tokens(max_tokens)
         .model(model)
-        .messages(memory.messages())
+        .messages(
+            memory_manager
+                .messages(&messages)?
+                .iter()
+                .cloned()
+                .map(IntoRequestMessage::into_async_openai)
+                .collect::<Vec<_>>(),
+        )
         .build()?;
 
     let client = Client::new();
@@ -48,9 +61,15 @@ async fn main() -> Result<(), Box<dyn Error>> {
             "{}: Role: {}  Content: {:?}",
             choice.index, choice.message.role, choice.message.content
         );
-        memory.push(choice.message);
+        messages.push(ChatCompletionRequestMessage {
+            role: choice.message.role,
+            content: choice.message.content,
+            function_call: choice.message.function_call,
+
+            name: None,
+        });
     }
 
-    println!("{memory:#?}");
+    println!("{:#?}", memory_manager.messages(&messages)?);
     Ok(())
 }
