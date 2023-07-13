@@ -15,13 +15,16 @@ pub struct ChatSplitter {
     ///
     /// This is the same as in the [official API](https://platform.openai.com/docs/api-reference/chat#completions/create-prompt) and given to `async-openai`.
     /// The total length of input tokens and generated tokens is limited by the
-    /// model's context length. Splits will have at least that many tokens
-    /// available for chat completion, never less.
+    /// model's context length.
+    /// Splits will have at least that many tokens
+    /// available for chat completion,
+    /// never less.
     max_tokens: u16,
 
     /// The maximum number of messages to have in the chat.
     ///
-    /// Splits will have at most that many messages, never more.
+    /// Splits will have at most that many messages,
+    /// never more.
     max_messages: usize,
 }
 
@@ -150,7 +153,8 @@ impl ChatSplitter {
         n
     }
 
-    /// Get a split position by first considering the `max_messages` limit, then
+    /// Get a split position by first considering the `max_messages` limit,
+    /// then
     /// the `max_tokens` limit.
     ///
     /// # Panics
@@ -166,10 +170,12 @@ impl ChatSplitter {
         n + self.position_by_max_tokens(&messages[n..])
     }
 
-    /// Split the chat into two groups of messages, the 'outdated' and the
+    /// Split the chat into two groups of messages,
+    /// the 'outdated' and the
     /// 'recent' ones.
     ///
-    /// The 'recent' messages are guaranteed to satisfy the given limits, while
+    /// The 'recent' messages are guaranteed to satisfy the given limits,
+    /// while
     /// the 'outdated' ones contain all the ones before 'recent'.
     ///
     /// # Panics

@@ -11,7 +11,8 @@ first create a `ChatSplitter` with the desired model,
 maximum tokens,
 and maximum messages.
 Then,
-use the `split` method to split your chat history into two groups: the 'outdated' messages and the 'recent' ones.
+use the `split` method to split your chat history into two groups:
+the 'outdated' messages and the 'recent' ones.
 
 Here's a basic example:
 
