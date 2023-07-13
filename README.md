@@ -1,4 +1,4 @@
-# `chat-splitter`
+# chat-splitter
 
 Never exceed [OpenAI](https://openai.com/)'s [chat models](https://platform.openai.com/docs/api-reference/chat)' [maximum number of tokens](https://help.openai.com/en/articles/4936856-what-are-tokens-and-how-to-count-them) when using the [async-openai](https://github.com/64bit/async-openai) Rust crate.
 
