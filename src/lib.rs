@@ -4,11 +4,11 @@ use indxvec::Search;
 use tiktoken_rs::get_chat_completion_max_tokens;
 use tiktoken_rs::model::get_context_size;
 
+/// Chat splitter.
 pub struct ChatSplitter {
-    /// ID of the model to use.
+    /// Model to use.
     ///
-    /// This is passed to `tiktoken-rs` to select the correct tokenizer for the
-    /// model.
+    /// The model is passed to `tiktoken-rs` to select the correct tokenizer.
     model: String,
 
     /// The maximum number of tokens to leave for chat completion.
@@ -39,6 +39,7 @@ impl Default for ChatSplitter {
 }
 
 impl ChatSplitter {
+    /// Create a new chat splitter for the given model.
     #[inline]
     pub fn new(model: impl Into<String>) -> Self {
         let model = model.into();
@@ -54,6 +55,7 @@ impl ChatSplitter {
         }
     }
 
+    /// Set the maximum number of messages for future splits.
     #[inline]
     pub fn max_messages(mut self, max_messages: impl Into<usize>) -> Self {
         self.max_messages = max_messages.into();
@@ -66,6 +68,7 @@ impl ChatSplitter {
         self
     }
 
+    /// Set the maximum number of chat completion tokens for future splits.
     #[inline]
     pub fn max_tokens(mut self, max_tokens: impl Into<u16>) -> Self {
         self.max_tokens = max_tokens.into();
@@ -78,6 +81,9 @@ impl ChatSplitter {
         self
     }
 
+    /// Set the model.
+    ///
+    /// The model is passed to `tiktoken-rs` to select the correct tokenizer.
     #[inline]
     pub fn model(mut self, model: impl Into<String>) -> Self {
         self.model = model.into();
@@ -101,6 +107,7 @@ impl ChatSplitter {
     /// Get a split position by only considering `max_tokens`.
     ///
     /// # Panics
+    ///
     /// If tokenizer for the specified model is not found or is not a supported
     /// chat model.
     #[inline]
@@ -136,13 +143,11 @@ impl ChatSplitter {
         n
     }
 
-    /// Get the split position for the recent messages that fit the model's
-    /// maximum number of tokens.
-    ///
-    /// This works by first considering the `max_messages` limit, then the
-    /// `max_tokens` limit.
+    /// Get a split position by first considering the `max_messages` limit, then
+    /// the `max_tokens` limit.
     ///
     /// # Panics
+    ///
     /// If tokenizer for the specified model is not found or is not a supported
     /// chat model.
     #[inline]
@@ -158,6 +163,7 @@ impl ChatSplitter {
     /// tokens.
     ///
     /// # Panics
+    ///
     /// If tokenizer for the specified model is not found or is not a supported
     /// chat model.
     #[inline]
@@ -171,6 +177,7 @@ impl ChatSplitter {
     }
 }
 
+// TODO: review
 pub trait IntoRequestMessage {
     /// Convert to `tiktoken-rs` completion request message.
     fn into_tiktoken_rs(self) -> tiktoken_rs::ChatCompletionRequestMessage;
