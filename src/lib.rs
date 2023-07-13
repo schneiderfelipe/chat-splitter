@@ -166,11 +166,11 @@ impl ChatSplitter {
         n + self.position_by_max_tokens(&messages[n..])
     }
 
-    /// Split the chat into two groups of messages, the old and the most recent
-    /// ones.
+    /// Split the chat into two groups of messages, the 'outdated' and the
+    /// 'recent' ones.
     ///
-    /// The most recent messages are guaranteed to satisfy the given limits, the
-    /// old ones contain all the previous ones.
+    /// The 'recent' messages are guaranteed to satisfy the given limits, while
+    /// the 'outdated' ones contain all the ones before 'recent'.
     ///
     /// # Panics
     ///

@@ -23,7 +23,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     );
     assert!(stored_messages.len() > MAX_MESSAGES);
 
-    let (_previous_messages, recent_messages) = ChatSplitter::new(MODEL)
+    let (_outdated_messages, recent_messages) = ChatSplitter::new(MODEL)
         .max_tokens(MAX_TOKENS)
         .max_messages(MAX_MESSAGES)
         .split(&stored_messages);
