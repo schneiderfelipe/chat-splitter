@@ -16,18 +16,12 @@ use the `split` method to split your chat history into two groups: the old messa
 Here's a basic example:
 
 ```rust
-let mut stored_messages = get_stored_messages()?;
-stored_messages.push(
-    ChatCompletionRequestMessageArgs::default()
-        .role(Role::User)
-        .content("Where was it played?")
-        .build()?,
-);
-assert!(stored_messages.len() > MAX_MESSAGES);
+// Get all your previously stored chat messages...
+let mut stored_messages = /* get_stored_messages()? */;
 
-let (_previous_messages, recent_messages) = ChatSplitter::new(MODEL)
-    .max_tokens(MAX_TOKENS)
-    .max_messages(MAX_MESSAGES)
+// ...and split into 'outdated' and 'recent',
+// where 'recent' always fits the model's context window.
+let (outdated_messages, recent_messages) = ChatSplitter::default()
     .split(&stored_messages);
 ```
 
