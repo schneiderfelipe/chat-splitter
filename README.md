@@ -1,6 +1,6 @@
 # chat-memory
 
-Chat memory is a utility for managing chat history in applications using the [64bit/async-openai](https://github.com/64bit/async-openai) library. It provides functionality for splitting chats into manageable chunks, ensuring that the maximum number of tokens and messages are not exceeded.
+Chat memory is a utility for managing chat history in applications using the [64bit/async-openai](https://github.com/64bit/async-openai) and [zurawiki/tiktoken-rs](https://github.com/zurawiki/tiktoken-rs) libraries. It provides functionality for splitting chats into manageable chunks, ensuring that the maximum number of tokens and messages are not exceeded.
 
 ## Usage
 
@@ -24,7 +24,7 @@ let (_previous_messages, recent_messages) = ChatSplitter::new(MODEL)
     .split(&stored_messages);
 ```
 
-For a more detailed example, see `examples/chat.rs`.
+For a more detailed example, see [`examples/chat.rs`](https://github.com/schneiderfelipe/chat-memory/blob/main/examples/chat.rs).
 
 ## Contributing
 
