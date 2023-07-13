@@ -5,8 +5,8 @@ use async_openai::types::ChatCompletionRequestMessageArgs;
 use async_openai::types::CreateChatCompletionRequestArgs;
 use async_openai::types::Role;
 use async_openai::Client;
-use chat_memory::ChatSplitter;
-use chat_memory::IntoRequestMessage;
+use chat_splitter::ChatSplitter;
+use chat_splitter::IntoRequestMessage;
 
 const MODEL: &str = "gpt-3.5-turbo";
 const MAX_TOKENS: u16 = 1024;
