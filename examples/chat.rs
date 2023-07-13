@@ -14,24 +14,25 @@ const MAX_MESSAGES: usize = 16;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    let mut previous_messages = previous_messages()?;
-    previous_messages.push(
+    let mut stored_messages = get_stored_messages()?;
+    stored_messages.push(
         ChatCompletionRequestMessageArgs::default()
             .role(Role::User)
             .content("Where was it played?")
             .build()?,
     );
-    assert!(previous_messages.len() > MAX_MESSAGES);
+    assert!(stored_messages.len() > MAX_MESSAGES);
 
-    let memory_manager = ChatSplitter::new(MODEL)
+    let (_previous_messages, recent_messages) = ChatSplitter::new(MODEL)
         .max_tokens(MAX_TOKENS)
-        .max_messages(MAX_MESSAGES);
+        .max_messages(MAX_MESSAGES)
+        .split(&stored_messages);
 
     let mut messages = vec![ChatCompletionRequestMessageArgs::default()
         .role(Role::System)
         .content("You are a helpful assistant.")
         .build()?];
-    messages.extend(memory_manager.messages(&previous_messages).iter().cloned());
+    messages.extend(recent_messages.iter().cloned());
     assert!(messages.len() <= MAX_MESSAGES + 1);
 
     let request = CreateChatCompletionRequestArgs::default()
@@ -50,13 +51,13 @@ async fn main() -> Result<(), Box<dyn Error>> {
             choice.index, choice.message.role, choice.message.content
         );
 
-        previous_messages.push(choice.message.into_async_openai());
+        stored_messages.push(choice.message.into_async_openai());
     }
 
     Ok(())
 }
 
-fn previous_messages() -> Result<Vec<ChatCompletionRequestMessage>, Box<dyn Error>> {
+fn get_stored_messages() -> Result<Vec<ChatCompletionRequestMessage>, Box<dyn Error>> {
     let mut messages = Vec::new();
     for _ in 0..2000 {
         messages.extend([

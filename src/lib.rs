@@ -92,11 +92,11 @@ impl ChatSplitter {
 
     /// Get a split position by only considering `max_messages`.
     #[inline]
-    fn position_by_max_messages<M>(&self, messages: &[M], max_messages: usize) -> usize
+    fn position_by_max_messages<M>(&self, messages: &[M]) -> usize
     where
         M: IntoRequestMessage + Clone,
     {
-        let upper_limit = max_messages.min(MAX_MESSAGES_LIMIT);
+        let upper_limit = self.max_messages.min(MAX_MESSAGES_LIMIT);
 
         let n = messages.len();
         let n = if n <= upper_limit { 0 } else { n - upper_limit };
@@ -111,11 +111,11 @@ impl ChatSplitter {
     /// If tokenizer for the specified model is not found or is not a supported
     /// chat model.
     #[inline]
-    fn position_by_max_tokens<M>(&self, messages: &[M], max_tokens: u16) -> usize
+    fn position_by_max_tokens<M>(&self, messages: &[M]) -> usize
     where
         M: IntoRequestMessage + Clone,
     {
-        let max_tokens = max_tokens as usize;
+        let max_tokens = self.max_tokens as usize;
         let lower_limit = max_tokens.min(get_context_size(&self.model));
 
         let messages: Vec<_> = messages
@@ -151,29 +151,30 @@ impl ChatSplitter {
     /// If tokenizer for the specified model is not found or is not a supported
     /// chat model.
     #[inline]
-    fn position<M>(&self, messages: &[M], max_tokens: u16, max_messages: usize) -> usize
+    fn position<M>(&self, messages: &[M]) -> usize
     where
         M: IntoRequestMessage + Clone,
     {
-        let n = self.position_by_max_messages(messages, max_messages);
-        n + self.position_by_max_tokens(&messages[n..], max_tokens)
+        let n = self.position_by_max_messages(messages);
+        n + self.position_by_max_tokens(&messages[n..])
     }
 
-    /// Get the most recent messages that fit the model's maximum number of
-    /// tokens.
+    /// Split the chat into two groups of messages, the old and the most recent
+    /// ones.
+    ///
+    /// The most recent messages are guaranteed to satisfy the given limits, the
+    /// old ones contain all the previous ones.
     ///
     /// # Panics
     ///
     /// If tokenizer for the specified model is not found or is not a supported
     /// chat model.
     #[inline]
-    pub fn messages<'a, M>(&self, messages: &'a [M]) -> &'a [M]
+    pub fn split<'a, M>(&self, messages: &'a [M]) -> (&'a [M], &'a [M])
     where
         M: IntoRequestMessage + Clone,
     {
-        // TODO: transition to split
-        let n = self.position(messages, self.max_tokens, self.max_messages);
-        &messages[n..]
+        messages.split_at(self.position(messages))
     }
 }
 
@@ -276,6 +277,7 @@ mod tests {
     fn it_works() {
         let messages: Vec<async_openai::types::ChatCompletionRequestMessage> = Vec::new();
 
-        assert_eq!(ChatSplitter::default().messages(&messages), &[]);
+        assert_eq!(ChatSplitter::default().split(&messages).0, &[]);
+        assert_eq!(ChatSplitter::default().split(&messages).1, &[]);
     }
 }
