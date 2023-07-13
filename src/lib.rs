@@ -4,11 +4,11 @@ use indxvec::Search;
 use tiktoken_rs::get_chat_completion_max_tokens;
 use tiktoken_rs::model::get_context_size;
 
-/// Chat splitter.
+/// ChatSplitter is a struct that helps in splitting the chat.
 pub struct ChatSplitter {
-    /// Model to use.
+    /// The model to use for tokenization.
     ///
-    /// The model is passed to `tiktoken-rs` to select the correct tokenizer.
+    /// This model is passed to `tiktoken-rs` to select the correct tokenizer.
     model: String,
 
     /// The maximum number of tokens to leave for chat completion.
@@ -145,7 +145,7 @@ impl ChatSplitter {
         debug_assert!(
             get_chat_completion_max_tokens(&self.model, &messages[n..])
                 .expect("tokenizer should be available")
-                >= lower_limit
+            >= lower_limit
         );
         n
     }
