@@ -1,18 +1,15 @@
 # `chat-splitter`
 
-`chat-splitter` is a utility for managing chat history in applications using the [64bit/async-openai](https://github.com/64bit/async-openai) and [zurawiki/tiktoken-rs](https://github.com/zurawiki/tiktoken-rs) libraries.
-It provides functionality for splitting chats into manageable chunks,
-ensuring that the maximum number of tokens and messages are not exceeded.
+Split chats into 'outdated' and 'recent' messages,
+so that you never exceed OpenAI's maximum number of tokens when using [64bit/async-openai](https://github.com/64bit/async-openai).
+Tokens are counted using [zurawiki/tiktoken-rs](https://github.com/zurawiki/tiktoken-rs).
+
+You can split by
+both
+maximum message count and
+maximum chat completion token count.
 
 ## Usage
-
-To use `chat-splitter`,
-first create a `ChatSplitter` with the desired model,
-maximum tokens,
-and maximum messages.
-Then,
-use the `split` method to split your chat history into two groups:
-the 'outdated' messages and the 'recent' ones.
 
 Here's a basic example:
 
