@@ -4,7 +4,7 @@ use async_openai::types::ChatCompletionRequestMessageArgs;
 use async_openai::types::CreateChatCompletionRequestArgs;
 use async_openai::types::Role;
 use async_openai::Client;
-use chat_memory::ChatMemoryManagerBuilder;
+use chat_memory::ChatSplitter;
 use chat_memory::IntoRequestMessage;
 
 #[tokio::main]
@@ -12,10 +12,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let max_tokens = 512u16;
     let model = "gpt-3.5-turbo";
 
-    let memory_manager = ChatMemoryManagerBuilder::default()
-        .max_tokens(max_tokens)
-        .model(model)
-        .build()?;
+    let memory_manager = ChatSplitter::default().max_tokens(max_tokens).model(model);
 
     let mut messages = Vec::new();
     for _ in 0..1000 {
@@ -42,14 +39,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let request = CreateChatCompletionRequestArgs::default()
         .max_tokens(max_tokens)
         .model(model)
-        .messages(
-            memory_manager
-                .messages(&messages)?
-                .iter()
-                .cloned()
-                .map(IntoRequestMessage::into_async_openai)
-                .collect::<Vec<_>>(),
-        )
+        .messages(memory_manager.messages(&messages))
         .build()?;
 
     let client = Client::new();
@@ -64,6 +54,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
         messages.push(choice.message.into_async_openai());
     }
 
-    println!("{:#?}", memory_manager.messages(&messages)?);
+    println!("{:#?}", memory_manager.messages(&messages));
     Ok(())
 }
