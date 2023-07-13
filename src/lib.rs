@@ -40,11 +40,15 @@ impl Default for ChatSplitter {
 
 impl ChatSplitter {
     /// Create a new chat splitter for the given model.
+    ///
+    /// # Panics
+    ///
+    /// If for some reason `tiktoken-rs` gives a context size twice as large as
+    /// what would fit in a `u16`.
     #[inline]
     pub fn new(model: impl Into<String>) -> Self {
         let model = model.into();
-        let max_tokens = get_context_size(&model) / 2;
-        let max_tokens = max_tokens as u16;
+        let max_tokens = u16::try_from(get_context_size(&model) / 2).unwrap();
 
         let max_messages = MAX_MESSAGES_LIMIT / 2;
 
@@ -57,6 +61,7 @@ impl ChatSplitter {
 
     /// Set the maximum number of messages for future splits.
     #[inline]
+    #[must_use]
     pub fn max_messages(mut self, max_messages: impl Into<usize>) -> Self {
         self.max_messages = max_messages.into();
         if self.max_messages > MAX_MESSAGES_LIMIT {
@@ -70,6 +75,7 @@ impl ChatSplitter {
 
     /// Set the maximum number of chat completion tokens for future splits.
     #[inline]
+    #[must_use]
     pub fn max_tokens(mut self, max_tokens: impl Into<u16>) -> Self {
         self.max_tokens = max_tokens.into();
         if self.max_tokens < RECOMMENDED_MIN_MAX_TOKENS {
@@ -85,6 +91,7 @@ impl ChatSplitter {
     ///
     /// The model is passed to `tiktoken-rs` to select the correct tokenizer.
     #[inline]
+    #[must_use]
     pub fn model(mut self, model: impl Into<String>) -> Self {
         self.model = model.into();
         self

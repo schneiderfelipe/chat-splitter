@@ -12,7 +12,7 @@ const MODEL: &str = "gpt-3.5-turbo";
 const MAX_TOKENS: u16 = 1024;
 const MAX_MESSAGES: usize = 16;
 
-#[tokio::main]
+#[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<(), Box<dyn Error>> {
     let mut stored_messages = get_stored_messages()?;
     stored_messages.push(
