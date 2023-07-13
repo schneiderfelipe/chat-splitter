@@ -177,10 +177,12 @@ impl ChatSplitter {
     }
 }
 
-// TODO: review
+/// Extension traits for converting to different completion request message
+/// types.
 pub trait IntoRequestMessage {
     /// Convert to `tiktoken-rs` completion request message.
     fn into_tiktoken_rs(self) -> tiktoken_rs::ChatCompletionRequestMessage;
+
     /// Convert to `async-openai` completion request message.
     fn into_async_openai(self) -> async_openai::types::ChatCompletionRequestMessage;
 }
@@ -268,7 +270,12 @@ impl IntoRequestMessage for async_openai::types::ChatCompletionResponseMessage {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
 
     #[test]
-    fn it_works() {}
+    fn it_works() {
+        let messages: Vec<async_openai::types::ChatCompletionRequestMessage> = Vec::new();
+
+        assert_eq!(ChatSplitter::default().messages(&messages), &[]);
+    }
 }
