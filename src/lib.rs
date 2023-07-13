@@ -38,7 +38,7 @@ use indxvec::Search;
 use tiktoken_rs::get_chat_completion_max_tokens;
 use tiktoken_rs::model::get_context_size;
 
-/// [`ChatSplitter`] is a struct that helps in splitting the chat.
+/// Chat splitter for [OpenAI](https://openai.com/)'s [chat models](https://platform.openai.com/docs/api-reference/chat) when using [async-openai](https://github.com/64bit/async-openai).
 pub struct ChatSplitter {
     /// The model to use for tokenization.
     ///
@@ -138,7 +138,7 @@ impl ChatSplitter {
     #[inline]
     fn position_by_max_messages<M>(&self, messages: &[M]) -> usize
     where
-        M: IntoRequestMessage + Clone,
+        M: IntoChatCompletionRequestMessage + Clone,
     {
         let upper_limit = self.max_messages.min(MAX_MESSAGES_LIMIT);
 
@@ -157,7 +157,7 @@ impl ChatSplitter {
     #[inline]
     fn position_by_max_tokens<M>(&self, messages: &[M]) -> usize
     where
-        M: IntoRequestMessage + Clone,
+        M: IntoChatCompletionRequestMessage + Clone,
     {
         let max_tokens = self.max_tokens as usize;
         let lower_limit = max_tokens.min(get_context_size(&self.model));
@@ -165,7 +165,7 @@ impl ChatSplitter {
         let messages: Vec<_> = messages
             .iter()
             .cloned()
-            .map(IntoRequestMessage::into_tiktoken_rs)
+            .map(IntoChatCompletionRequestMessage::into_tiktoken_rs)
             .collect();
 
         let (n, _range) = (0..=messages.len()).binary_any(|n| {
@@ -198,7 +198,7 @@ impl ChatSplitter {
     #[inline]
     fn position<M>(&self, messages: &[M]) -> usize
     where
-        M: IntoRequestMessage + Clone,
+        M: IntoChatCompletionRequestMessage + Clone,
     {
         let n = self.position_by_max_messages(messages);
         n + self.position_by_max_tokens(&messages[n..])
@@ -219,15 +219,15 @@ impl ChatSplitter {
     #[inline]
     pub fn split<'a, M>(&self, messages: &'a [M]) -> (&'a [M], &'a [M])
     where
-        M: IntoRequestMessage + Clone,
+        M: IntoChatCompletionRequestMessage + Clone,
     {
         messages.split_at(self.position(messages))
     }
 }
 
-/// Extension traits for converting to different completion request message
+/// Extension trait for converting to different chat completion request message
 /// types.
-pub trait IntoRequestMessage {
+pub trait IntoChatCompletionRequestMessage {
     /// Convert to `tiktoken-rs` completion request message.
     fn into_tiktoken_rs(self) -> tiktoken_rs::ChatCompletionRequestMessage;
 
@@ -235,7 +235,7 @@ pub trait IntoRequestMessage {
     fn into_async_openai(self) -> async_openai::types::ChatCompletionRequestMessage;
 }
 
-impl IntoRequestMessage for tiktoken_rs::ChatCompletionRequestMessage {
+impl IntoChatCompletionRequestMessage for tiktoken_rs::ChatCompletionRequestMessage {
     #[inline]
     fn into_tiktoken_rs(self) -> tiktoken_rs::ChatCompletionRequestMessage {
         self
@@ -264,7 +264,7 @@ impl IntoRequestMessage for tiktoken_rs::ChatCompletionRequestMessage {
     }
 }
 
-impl IntoRequestMessage for async_openai::types::ChatCompletionRequestMessage {
+impl IntoChatCompletionRequestMessage for async_openai::types::ChatCompletionRequestMessage {
     #[inline]
     fn into_tiktoken_rs(self) -> tiktoken_rs::ChatCompletionRequestMessage {
         tiktoken_rs::ChatCompletionRequestMessage {
@@ -287,7 +287,7 @@ impl IntoRequestMessage for async_openai::types::ChatCompletionRequestMessage {
     }
 }
 
-impl IntoRequestMessage for async_openai::types::ChatCompletionResponseMessage {
+impl IntoChatCompletionRequestMessage for async_openai::types::ChatCompletionResponseMessage {
     #[inline]
     fn into_tiktoken_rs(self) -> tiktoken_rs::ChatCompletionRequestMessage {
         tiktoken_rs::ChatCompletionRequestMessage {
