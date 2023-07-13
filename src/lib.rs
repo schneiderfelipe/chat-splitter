@@ -13,17 +13,17 @@ pub struct ChatSplitter {
     /// This is to ensure there's room for the model to generate a response
     /// given the trimmed context.
     /// See [`CreateChatCompletionRequestArgs.max_tokens`].
-    max_tokens: usize,
+    max_tokens: u16,
 
     /// The maximum number of messages to have in a conversation context.
-    max_messages: usize,
+    max_messages: u16,
 }
 
-const DEFAULT_MAX_MESSAGES: usize = 128;
-const DEFAULT_MAX_TOKENS: usize = 1_024;
+const DEFAULT_MAX_MESSAGES: u16 = 128;
+const DEFAULT_MAX_TOKENS: u16 = 1_024;
 const DEFAULT_MODEL: &str = "gpt-3.5-turbo";
-const MAX_MESSAGES_LIMIT: usize = 2_048;
-const MAX_TOKENS_LIMIT: usize = 32_768;
+const MAX_MESSAGES_LIMIT: u16 = 2_048;
+const MAX_TOKENS_LIMIT: u16 = 32_768;
 
 impl Default for ChatSplitter {
     #[inline]
@@ -46,13 +46,13 @@ impl ChatSplitter {
     }
 
     #[inline]
-    pub fn max_messages(mut self, max_messages: impl Into<usize>) -> Self {
+    pub fn max_messages(mut self, max_messages: impl Into<u16>) -> Self {
         self.max_messages = max_messages.into();
         self
     }
 
     #[inline]
-    pub fn max_tokens(mut self, max_tokens: impl Into<usize>) -> Self {
+    pub fn max_tokens(mut self, max_tokens: impl Into<u16>) -> Self {
         self.max_tokens = max_tokens.into();
         self
     }
@@ -65,11 +65,11 @@ impl ChatSplitter {
 
     /// Get a split position by only considering `max_messages`.
     #[inline]
-    fn position_by_max_messages<M>(&self, messages: &[M], max_messages: usize) -> usize
+    fn position_by_max_messages<M>(&self, messages: &[M], max_messages: u16) -> usize
     where
         M: IntoRequestMessage + Clone,
     {
-        let limit = max_messages.min(MAX_MESSAGES_LIMIT);
+        let limit = max_messages.min(MAX_MESSAGES_LIMIT) as usize;
         let n = messages.len();
 
         if n <= limit {
@@ -85,7 +85,7 @@ impl ChatSplitter {
     /// If tokenizer for the specified model is not found or is not a supported
     /// chat model.
     #[inline]
-    fn position_by_max_tokens<M>(&self, messages: &[M], max_tokens: usize) -> usize
+    fn position_by_max_tokens<M>(&self, messages: &[M], max_tokens: u16) -> usize
     where
         M: IntoRequestMessage + Clone,
     {
@@ -95,18 +95,20 @@ impl ChatSplitter {
             .map(IntoRequestMessage::into_tiktoken_rs)
             .collect();
 
-        let limit = max_tokens.min(MAX_TOKENS_LIMIT);
+        let limit = max_tokens.min(MAX_TOKENS_LIMIT) as usize;
+        dbg!(limit);
         let (n, range) = (0..=messages.len() - 1).binary_any(|m| {
             let tokens = get_chat_completion_max_tokens(&self.model, &messages[m..])
                 .expect("tokenizer should be available");
-            tokens.cmp(&limit).reverse()
+            dbg!(tokens);
+            tokens.cmp(&limit)
         });
         dbg!(n);
         dbg!(range);
         debug_assert!(
             get_chat_completion_max_tokens(&self.model, &messages[n..])
                 .expect("tokenizer should be available")
-                >= max_tokens
+                >= limit
         );
         n
     }
@@ -121,7 +123,7 @@ impl ChatSplitter {
     /// If tokenizer for the specified model is not found or is not a supported
     /// chat model.
     #[inline]
-    fn position<M>(&self, messages: &[M], max_messages: usize, max_tokens: usize) -> usize
+    fn position<M>(&self, messages: &[M], max_messages: u16, max_tokens: u16) -> usize
     where
         M: IntoRequestMessage + Clone,
     {

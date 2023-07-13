@@ -9,10 +9,14 @@ use chat_memory::IntoRequestMessage;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
+    let max_messages = 10000u16;
     let max_tokens = 512u16;
     let model = "gpt-3.5-turbo";
 
-    let memory_manager = ChatSplitter::default().max_tokens(max_tokens).model(model);
+    let memory_manager = ChatSplitter::default()
+        .max_messages(max_messages)
+        .max_tokens(max_tokens)
+        .model(model);
 
     let mut messages = Vec::new();
     for _ in 0..1000 {
