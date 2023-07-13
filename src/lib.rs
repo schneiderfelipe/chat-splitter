@@ -25,8 +25,11 @@ pub struct ChatSplitter {
     max_messages: usize,
 }
 
-/// Hard limit that seems to be imposed by the `OpenAI` API
+/// Hard limit that seems to be imposed by the `OpenAI` API.
 const MAX_MESSAGES_LIMIT: usize = 2_048;
+
+/// Recommended minimum for maximum chat completion tokens.
+const RECOMMENDED_MIN_MAX_TOKENS: u16 = 256;
 
 impl Default for ChatSplitter {
     #[inline]
@@ -54,23 +57,30 @@ impl ChatSplitter {
     #[inline]
     pub fn max_messages(mut self, max_messages: impl Into<usize>) -> Self {
         self.max_messages = max_messages.into();
-        // TODO: transform in a warning
-        debug_assert!(self.max_messages <= MAX_MESSAGES_LIMIT);
+        if self.max_messages > MAX_MESSAGES_LIMIT {
+            log::warn!(
+                "max_messages = {} > {MAX_MESSAGES_LIMIT}",
+                self.max_messages
+            );
+        }
         self
     }
 
     #[inline]
     pub fn max_tokens(mut self, max_tokens: impl Into<u16>) -> Self {
         self.max_tokens = max_tokens.into();
-        // TODO: transform in a warning
-        debug_assert!(self.max_tokens >= 256);
+        if self.max_tokens < RECOMMENDED_MIN_MAX_TOKENS {
+            log::warn!(
+                "max_tokens = {} < {RECOMMENDED_MIN_MAX_TOKENS}",
+                self.max_tokens
+            );
+        }
         self
     }
 
     #[inline]
     pub fn model(mut self, model: impl Into<String>) -> Self {
         self.model = model.into();
-        // TODO: check existance?
         self
     }
 
