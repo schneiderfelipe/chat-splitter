@@ -11,7 +11,7 @@
 //!
 //! Here's a basic example:
 //!
-//! ```rust
+//! ```ignore
 //! // Get all your previously stored chat messages...
 //! let mut stored_messages = /* get_stored_messages()? */;
 //!
