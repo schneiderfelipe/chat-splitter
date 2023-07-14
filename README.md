@@ -1,13 +1,13 @@
 # chat-splitter
 
-Never exceed [OpenAI](https://openai.com/)'s [chat models](https://platform.openai.com/docs/api-reference/chat)' [maximum number of tokens](https://help.openai.com/en/articles/4936856-what-are-tokens-and-how-to-count-them) when using the [async-openai](https://github.com/64bit/async-openai) Rust crate.
+Never exceed [OpenAI](https://openai.com/)'s [chat models](https://platform.openai.com/docs/api-reference/chat)' [maximum number of tokens](https://help.openai.com/en/articles/4936856-what-are-tokens-and-how-to-count-them) when using the [`async_openai`] Rust crate.
 
 `chat-splitter` splits chats into 'outdated' and 'recent' messages.
 You can split by
 both
 maximum message count and
 maximum chat completion token count.
-We count tokens with [tiktoken-rs](https://github.com/zurawiki/tiktoken-rs).
+We use [`tiktoken_rs`] for counting tokens.
 
 ## Usage
 
@@ -18,7 +18,7 @@ Here's a basic example:
 let mut stored_messages = /* get_stored_messages()? */;
 
 // ...and split into 'outdated' and 'recent',
-// where 'recent' always fits the model's context window.
+// where 'recent' always fits the context size.
 let (outdated_messages, recent_messages) = ChatSplitter::default()
     .split(&stored_messages);
 ```
