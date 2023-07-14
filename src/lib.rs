@@ -136,10 +136,7 @@ impl ChatSplitter {
 
     /// Get a split position by only considering `max_messages`.
     #[inline]
-    fn position_by_max_messages<M>(&self, messages: &[M]) -> usize
-    where
-        M: IntoChatCompletionRequestMessage + Clone,
-    {
+    fn position_by_max_messages<M>(&self, messages: &[M]) -> usize {
         let upper_limit = self.max_messages.min(MAX_MESSAGES_LIMIT);
 
         let n = messages.len();
