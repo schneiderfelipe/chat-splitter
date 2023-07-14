@@ -1,27 +1,68 @@
+//! Never exceed [OpenAI](https://openai.com/)'s [chat models](https://platform.openai.com/docs/api-reference/chat)' [maximum number of tokens](https://help.openai.com/en/articles/4936856-what-are-tokens-and-how-to-count-them) when using the [`async_openai`](https://github.com/64bit/async-openai) Rust crate.
+//!
+//! `chat-splitter` splits chats into 'outdated' and 'recent' messages.
+//! You can split by
+//! both
+//! maximum message count and
+//! maximum chat completion token count.
+//! We use [`tiktoken_rs`](https://github.com/zurawiki/tiktoken-rs) for counting tokens.
+//!
+//! # Usage
+//!
+//! Here's a basic example:
+//!
+//! ```ignore
+//! // Get all your previously stored chat messages...
+//! let mut stored_messages = /* get_stored_messages()? */;
+//!
+//! // ...and split into 'outdated' and 'recent',
+//! // where 'recent' always fits the context size.
+//! let (outdated_messages, recent_messages) =
+//!     ChatSplitter::default().split(&stored_messages);
+//! ```
+//!
+//! For a more detailed example,
+//! see [`examples/chat.rs`](https://github.com/schneiderfelipe/chat-splitter/blob/main/examples/chat.rs).
+//!
+//! # Contributing
+//!
+//! Contributions to `chat-splitter` are welcome!
+//! If you find a bug or have a feature request,
+//! please [submit an issue](https://github.com/schneiderfelipe/chat-splitter/issues).
+//! If you'd like to contribute code,
+//! please feel free to [submit a pull request](https://github.com/schneiderfelipe/chat-splitter/pulls).
+
 use std::cmp::Ordering;
 
 use indxvec::Search;
 use tiktoken_rs::get_chat_completion_max_tokens;
 use tiktoken_rs::model::get_context_size;
 
-/// ChatSplitter is a struct that helps in splitting the chat.
+/// Chat splitter for [OpenAI](https://openai.com/)'s [chat models](https://platform.openai.com/docs/api-reference/chat) when using [`async_openai`].
+///
+/// For more detailed information,
+/// see the [crate documentation](`crate`).
+#[derive(Clone, Debug)]
 pub struct ChatSplitter {
-    /// The model to use for tokenization.
+    /// The model to use for tokenization, e.g., `gpt-3.5-turbo`.
     ///
-    /// This model is passed to `tiktoken-rs` to select the correct tokenizer.
+    /// It is passed to [`tiktoken_rs`] to select the correct tokenizer.
     model: String,
 
     /// The maximum number of tokens to leave for chat completion.
     ///
-    /// This is the same as in the [official API](https://platform.openai.com/docs/api-reference/chat#completions/create-prompt) and given to `async-openai`.
+    /// This is the same as in the [official API](https://platform.openai.com/docs/api-reference/chat#completions/create-prompt) and given to [`async_openai`].
     /// The total length of input tokens and generated tokens is limited by the
-    /// model's context length. Splits will have at least that many tokens
-    /// available for chat completion, never less.
+    /// model's context size.
+    /// Splits will have at least that many tokens
+    /// available for chat completion,
+    /// never less.
     max_tokens: u16,
 
     /// The maximum number of messages to have in the chat.
     ///
-    /// Splits will have at most that many messages, never more.
+    /// Splits will have at most that many messages,
+    /// never more.
     max_messages: usize,
 }
 
@@ -39,12 +80,16 @@ impl Default for ChatSplitter {
 }
 
 impl ChatSplitter {
-    /// Create a new chat splitter for the given model.
+    /// Create a new [`ChatSplitter`] for the given model.
     ///
     /// # Panics
     ///
-    /// If for some reason `tiktoken-rs` gives a context size twice as large as
-    /// what would fit in a `u16`.
+    /// If for some reason [`tiktoken_rs`] gives a context size twice as large
+    /// as what would fit in a [`u16`].
+    /// If this happens,
+    /// it should be considered a bug,
+    /// but this behaviour might change in the future,
+    /// as models with larger context sizes are released.
     #[inline]
     pub fn new(model: impl Into<String>) -> Self {
         let model = model.into();
@@ -59,7 +104,10 @@ impl ChatSplitter {
         }
     }
 
-    /// Set the maximum number of messages for future splits.
+    /// Set the maximum number of messages to have in the chat.
+    ///
+    /// Splits will have at most that many messages,
+    /// never more.
     #[inline]
     #[must_use]
     pub fn max_messages(mut self, max_messages: impl Into<usize>) -> Self {
@@ -73,7 +121,14 @@ impl ChatSplitter {
         self
     }
 
-    /// Set the maximum number of chat completion tokens for future splits.
+    /// Set the maximum number of tokens to leave for chat completion.
+    ///
+    /// This is the same as in the [official API](https://platform.openai.com/docs/api-reference/chat#completions/create-prompt) and given to [`async_openai`].
+    /// The total length of input tokens and generated tokens is limited by the
+    /// model's context size.
+    /// Splits will have at least that many tokens
+    /// available for chat completion,
+    /// never less.
     #[inline]
     #[must_use]
     pub fn max_tokens(mut self, max_tokens: impl Into<u16>) -> Self {
@@ -87,9 +142,9 @@ impl ChatSplitter {
         self
     }
 
-    /// Set the model.
+    /// Set the model to use for tokenization, e.g., `gpt-3.5-turbo`.
     ///
-    /// The model is passed to `tiktoken-rs` to select the correct tokenizer.
+    /// It is passed to [`tiktoken_rs`] to select the correct tokenizer.
     #[inline]
     #[must_use]
     pub fn model(mut self, model: impl Into<String>) -> Self {
@@ -99,10 +154,7 @@ impl ChatSplitter {
 
     /// Get a split position by only considering `max_messages`.
     #[inline]
-    fn position_by_max_messages<M>(&self, messages: &[M]) -> usize
-    where
-        M: IntoRequestMessage + Clone,
-    {
+    fn position_by_max_messages<M>(&self, messages: &[M]) -> usize {
         let upper_limit = self.max_messages.min(MAX_MESSAGES_LIMIT);
 
         let n = messages.len();
@@ -120,7 +172,7 @@ impl ChatSplitter {
     #[inline]
     fn position_by_max_tokens<M>(&self, messages: &[M]) -> usize
     where
-        M: IntoRequestMessage + Clone,
+        M: IntoChatCompletionRequestMessage + Clone,
     {
         let max_tokens = self.max_tokens as usize;
         let lower_limit = max_tokens.min(get_context_size(&self.model));
@@ -128,7 +180,7 @@ impl ChatSplitter {
         let messages: Vec<_> = messages
             .iter()
             .cloned()
-            .map(IntoRequestMessage::into_tiktoken_rs)
+            .map(IntoChatCompletionRequestMessage::into_tiktoken_rs)
             .collect();
 
         let (n, _range) = (0..=messages.len()).binary_any(|n| {
@@ -145,12 +197,13 @@ impl ChatSplitter {
         debug_assert!(
             get_chat_completion_max_tokens(&self.model, &messages[n..])
                 .expect("tokenizer should be available")
-            >= lower_limit
+                >= lower_limit
         );
         n
     }
 
-    /// Get a split position by first considering the `max_messages` limit, then
+    /// Get a split position by first considering the `max_messages` limit,
+    /// then
     /// the `max_tokens` limit.
     ///
     /// # Panics
@@ -160,17 +213,22 @@ impl ChatSplitter {
     #[inline]
     fn position<M>(&self, messages: &[M]) -> usize
     where
-        M: IntoRequestMessage + Clone,
+        M: IntoChatCompletionRequestMessage + Clone,
     {
         let n = self.position_by_max_messages(messages);
         n + self.position_by_max_tokens(&messages[n..])
     }
 
-    /// Split the chat into two groups of messages, the old and the most recent
-    /// ones.
+    /// Split the chat into two groups of messages,
+    /// the 'outdated' and the
+    /// 'recent' ones.
     ///
-    /// The most recent messages are guaranteed to satisfy the given limits, the
-    /// old ones contain all the previous ones.
+    /// The 'recent' messages are guaranteed to satisfy the given limits,
+    /// while
+    /// the 'outdated' ones contain all the ones before 'recent'.
+    ///
+    /// For a detailed usage example,
+    /// see [`examples/chat.rs`](https://github.com/schneiderfelipe/chat-splitter/blob/main/examples/chat.rs).
     ///
     /// # Panics
     ///
@@ -179,23 +237,28 @@ impl ChatSplitter {
     #[inline]
     pub fn split<'a, M>(&self, messages: &'a [M]) -> (&'a [M], &'a [M])
     where
-        M: IntoRequestMessage + Clone,
+        M: IntoChatCompletionRequestMessage + Clone,
     {
         messages.split_at(self.position(messages))
     }
 }
 
-/// Extension traits for converting to different completion request message
-/// types.
-pub trait IntoRequestMessage {
-    /// Convert to `tiktoken-rs` completion request message.
+/// Extension trait for converting between different chat completion request
+/// message types.
+///
+/// For a usage example,
+/// see [`examples/chat.rs`](https://github.com/schneiderfelipe/chat-splitter/blob/736f4fceb57bc12adb2b70deb990030a266a95a5/examples/chat.rs#L44-L55).
+pub trait IntoChatCompletionRequestMessage {
+    /// Convert to [`tiktoken_rs` chat completion request message
+    /// type](`tiktoken_rs::ChatCompletionRequestMessage`).
     fn into_tiktoken_rs(self) -> tiktoken_rs::ChatCompletionRequestMessage;
 
-    /// Convert to `async-openai` completion request message.
+    /// Convert to [`async_openai` chat completion request message
+    /// type](`async_openai::types::ChatCompletionRequestMessage`).
     fn into_async_openai(self) -> async_openai::types::ChatCompletionRequestMessage;
 }
 
-impl IntoRequestMessage for tiktoken_rs::ChatCompletionRequestMessage {
+impl IntoChatCompletionRequestMessage for tiktoken_rs::ChatCompletionRequestMessage {
     #[inline]
     fn into_tiktoken_rs(self) -> tiktoken_rs::ChatCompletionRequestMessage {
         self
@@ -224,7 +287,7 @@ impl IntoRequestMessage for tiktoken_rs::ChatCompletionRequestMessage {
     }
 }
 
-impl IntoRequestMessage for async_openai::types::ChatCompletionRequestMessage {
+impl IntoChatCompletionRequestMessage for async_openai::types::ChatCompletionRequestMessage {
     #[inline]
     fn into_tiktoken_rs(self) -> tiktoken_rs::ChatCompletionRequestMessage {
         tiktoken_rs::ChatCompletionRequestMessage {
@@ -247,7 +310,7 @@ impl IntoRequestMessage for async_openai::types::ChatCompletionRequestMessage {
     }
 }
 
-impl IntoRequestMessage for async_openai::types::ChatCompletionResponseMessage {
+impl IntoChatCompletionRequestMessage for async_openai::types::ChatCompletionResponseMessage {
     #[inline]
     fn into_tiktoken_rs(self) -> tiktoken_rs::ChatCompletionRequestMessage {
         tiktoken_rs::ChatCompletionRequestMessage {

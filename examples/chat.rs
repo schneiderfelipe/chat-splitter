@@ -5,8 +5,8 @@ use async_openai::types::ChatCompletionRequestMessageArgs;
 use async_openai::types::CreateChatCompletionRequestArgs;
 use async_openai::types::Role;
 use async_openai::Client;
-use chat_memory::ChatSplitter;
-use chat_memory::IntoRequestMessage;
+use chat_splitter::ChatSplitter;
+use chat_splitter::IntoChatCompletionRequestMessage;
 
 const MODEL: &str = "gpt-3.5-turbo";
 const MAX_TOKENS: u16 = 1024;
@@ -23,7 +23,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     );
     assert!(stored_messages.len() > MAX_MESSAGES);
 
-    let (_previous_messages, recent_messages) = ChatSplitter::new(MODEL)
+    let (_outdated_messages, recent_messages) = ChatSplitter::new(MODEL)
         .max_tokens(MAX_TOKENS)
         .max_messages(MAX_MESSAGES)
         .split(&stored_messages);
