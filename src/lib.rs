@@ -222,13 +222,18 @@ impl ChatSplitter {
     }
 }
 
-/// Extension trait for converting to different chat completion request message
-/// types.
+/// Extension trait for converting between different chat completion request
+/// message types.
+///
+/// For a usage example,
+/// see [`examples/chat.rs`](https://github.com/schneiderfelipe/chat-splitter/blob/736f4fceb57bc12adb2b70deb990030a266a95a5/examples/chat.rs#L44-L55).
 pub trait IntoChatCompletionRequestMessage {
-    /// Convert to `tiktoken-rs` completion request message.
+    /// Convert to [`tiktoken_rs` chat completion request message
+    /// type](`tiktoken_rs::ChatCompletionRequestMessage`).
     fn into_tiktoken_rs(self) -> tiktoken_rs::ChatCompletionRequestMessage;
 
-    /// Convert to `async-openai` completion request message.
+    /// Convert to [`async_openai` chat completion request message
+    /// type](`async_openai::types::ChatCompletionRequestMessage`).
     fn into_async_openai(self) -> async_openai::types::ChatCompletionRequestMessage;
 }
 
