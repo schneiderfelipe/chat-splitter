@@ -7,14 +7,18 @@
 [Latest Version]: https://img.shields.io/crates/v/chat_splitter.svg
 [crates.io]: https://crates.io/crates/chat_splitter
 
-Never exceed [OpenAI](https://openai.com/)'s [chat models](https://platform.openai.com/docs/api-reference/chat)' [maximum number of tokens](https://help.openai.com/en/articles/4936856-what-are-tokens-and-how-to-count-them) when using the [`async_openai`](https://github.com/64bit/async-openai) Rust crate.
+> For more information,
+> please refer to the [blog announcement](https://schneiderfelipe.github.io/posts/chat-splitter-first-release/).
 
-`chat-splitter` splits chats into 'outdated' and 'recent' messages.
-You can split by
-both
-maximum message count and
-maximum chat completion token count.
-We use [`tiktoken_rs`](https://github.com/zurawiki/tiktoken-rs) for counting tokens.
+When utilizing the [`async_openai`](https://github.com/64bit/async-openai) [Rust](https://www.rust-lang.org/) crate,
+it is crucial to ensure that you do not exceed
+the [maximum number of tokens](https://help.openai.com/en/articles/4936856-what-are-tokens-and-how-to-count-them) specified by [OpenAI](https://openai.com/)'s [chat models](https://platform.openai.com/docs/api-reference/chat).
+
+[`chat-splitter`](https://crates.io/crates/chat_splitter) categorizes chat messages into 'outdated' and 'recent' messages,
+allowing you to split them based on both the maximum
+message count and the maximum chat completion token count.
+The token counting functionality is provided by
+[`tiktoken_rs`](https://github.com/zurawiki/tiktoken-rs).
 
 ## Usage
 
