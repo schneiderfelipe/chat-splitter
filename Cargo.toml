@@ -2,12 +2,12 @@
 name = "chat-splitter"
 version = "0.1.0"
 edition = "2021"
-rust-version = "1.65.0"
 license = "MIT"
 
 authors = ["Felipe S. S. Schneider <schneider.felipe.5@gmail.com>"]
 description = "Never exceed OpenAI's chat models' maximum number of tokens when using the async_openai Rust crate"
 repository = "https://github.com/schneiderfelipe/chat-splitter"
+rust-version = "1.72.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
