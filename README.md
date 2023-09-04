@@ -1,11 +1,15 @@
 # chat-splitter
 
-[![Build Status]][actions] [![Latest Version]][crates.io]
+[![Build Status]][actions]
+[![Latest Version]][crates.io]
+[![Documentation]][docs.rs]
 
 [Build Status]: https://github.com/schneiderfelipe/chat-splitter/actions/workflows/rust.yml/badge.svg
 [actions]: https://github.com/schneiderfelipe/chat-splitter/actions/workflows/rust.yml
 [Latest Version]: https://img.shields.io/crates/v/chat_splitter.svg
 [crates.io]: https://crates.io/crates/chat_splitter
+[Documentation]: https://img.shields.io/docsrs/chat-splitter
+[docs.rs]: https://docs.rs/chat-splitter
 
 > For more information,
 > please refer to the [blog announcement](https://schneiderfelipe.github.io/posts/chat-splitter-first-release/).
