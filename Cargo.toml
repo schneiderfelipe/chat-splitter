@@ -1,22 +1,22 @@
 [package]
 name = "chat-splitter"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
-rust-version = "1.65.0"
 license = "MIT"
 
 authors = ["Felipe S. S. Schneider <schneider.felipe.5@gmail.com>"]
 description = "Never exceed OpenAI's chat models' maximum number of tokens when using the async_openai Rust crate"
 repository = "https://github.com/schneiderfelipe/chat-splitter"
+rust-version = "1.72.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-async-openai = { version = "0.12.1", default-features = false }
+async-openai = { version = "0.12.2", default-features = false }
 indxvec = { version = "1.8.0", default-features = false }
-log = { version = "0.4.19", default-features = false }
-tiktoken-rs = { version = "0.5.0", default-features = false }
+log = { version = "0.4.20", default-features = false }
+tiktoken-rs = { version = "0.5.1", default-features = false }
 
 [dev-dependencies]
-async-openai = "0.12.1"
-tokio = "1.29.1"
+async-openai = "0.12.2"
+tokio = "1.32.0"
