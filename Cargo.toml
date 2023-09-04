@@ -18,5 +18,5 @@ log = { version = "0.4.20", default-features = false }
 tiktoken-rs = { version = "0.5.1", default-features = false }
 
 [dev-dependencies]
-async-openai = "0.12.1"
+async-openai = "0.12.2"
 tokio = "1.29.1"
