@@ -19,4 +19,4 @@ tiktoken-rs = { version = "0.5.1", default-features = false }
 
 [dev-dependencies]
 async-openai = "0.12.2"
-tokio = "1.29.1"
+tokio = "1.32.0"
