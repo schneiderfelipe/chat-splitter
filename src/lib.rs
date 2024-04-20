@@ -409,7 +409,9 @@ impl IntoChatCompletionRequestMessage for async_openai::types::ChatCompletionReq
                     name: Some(message.name),
                 }
             }
-            role => panic!("unsupported role '{role:?}'"),
+            role @ async_openai::types::ChatCompletionRequestMessage::Tool(_) => {
+                panic!("unsupported role '{role:?}'")
+            }
         }
     }
 
@@ -490,7 +492,7 @@ impl IntoChatCompletionRequestMessage for async_openai::types::ChatCompletionRes
                     },
                 )
             }
-            role => panic!("unsupported role '{role:?}'"),
+            role @ async_openai::types::Role::Tool => panic!("unsupported role '{role}'"),
         }
     }
 }
