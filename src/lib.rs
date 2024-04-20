@@ -290,12 +290,12 @@ impl IntoChatCompletionRequestMessage for tiktoken_rs::ChatCompletionRequestMess
                 role => panic!("unknown role '{role}'"),
             },
             content: self.content,
-            function_call: self.function_call.map(|fc| {
-                async_openai::types::FunctionCall {
+            function_call: self
+                .function_call
+                .map(|fc| async_openai::types::FunctionCall {
                     name: fc.name,
                     arguments: fc.arguments,
-                }
-            }),
+                }),
 
             name: self.name,
         }
@@ -308,11 +308,9 @@ impl IntoChatCompletionRequestMessage for async_openai::types::ChatCompletionReq
         tiktoken_rs::ChatCompletionRequestMessage {
             role: self.role.to_string(),
             content: self.content,
-            function_call: self.function_call.map(|fc| {
-                tiktoken_rs::FunctionCall {
-                    name: fc.name,
-                    arguments: fc.arguments,
-                }
+            function_call: self.function_call.map(|fc| tiktoken_rs::FunctionCall {
+                name: fc.name,
+                arguments: fc.arguments,
             }),
 
             name: self.name,
@@ -331,11 +329,9 @@ impl IntoChatCompletionRequestMessage for async_openai::types::ChatCompletionRes
         tiktoken_rs::ChatCompletionRequestMessage {
             role: self.role.to_string(),
             content: self.content,
-            function_call: self.function_call.map(|fc| {
-                tiktoken_rs::FunctionCall {
-                    name: fc.name,
-                    arguments: fc.arguments,
-                }
+            function_call: self.function_call.map(|fc| tiktoken_rs::FunctionCall {
+                name: fc.name,
+                arguments: fc.arguments,
             }),
 
             name: None,
