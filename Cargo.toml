@@ -14,10 +14,10 @@ rust-version = "1.72.0"
 
 [dependencies]
 async-openai = { version = "0.12.2", default-features = false }
-indxvec = { version = "1.8.0", default-features = false }
-log = { version = "0.4.20", default-features = false }
-tiktoken-rs = { version = "0.5.1", default-features = false }
+indxvec = { version = "1.9.0", default-features = false }
+log = { version = "0.4.21", default-features = false }
+tiktoken-rs = { version = "0.5.8", default-features = false }
 
 [dev-dependencies]
 async-openai = "0.12.2"
-tokio = "1.32.0"
+tokio = "1.37.0"
