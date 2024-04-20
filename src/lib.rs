@@ -281,23 +281,78 @@ impl IntoChatCompletionRequestMessage for tiktoken_rs::ChatCompletionRequestMess
 
     #[inline]
     fn into_async_openai(self) -> async_openai::types::ChatCompletionRequestMessage {
-        async_openai::types::ChatCompletionRequestMessage {
-            role: match self.role.as_ref() {
-                "user" => async_openai::types::Role::User,
-                "system" => async_openai::types::Role::System,
-                "assistant" => async_openai::types::Role::Assistant,
-                "function" => async_openai::types::Role::Function,
-                role => panic!("unknown role '{role}'"),
-            },
-            content: self.content,
-            function_call: self
-                .function_call
-                .map(|fc| async_openai::types::FunctionCall {
-                    name: fc.name,
-                    arguments: fc.arguments,
-                }),
-
-            name: self.name,
+        match self.role.as_ref() {
+            "user" => async_openai::types::ChatCompletionRequestMessage::User(
+                async_openai::types::ChatCompletionRequestUserMessage {
+                    role: match self.role.as_ref() {
+                        "user" => async_openai::types::Role::User,
+                        "system" => async_openai::types::Role::System,
+                        "assistant" => async_openai::types::Role::Assistant,
+                        "function" => async_openai::types::Role::Function,
+                        role => panic!("unsupported role '{role}'"),
+                    },
+                    content: match self.content {
+                        Some(text) => {
+                            async_openai::types::ChatCompletionRequestUserMessageContent::Text(text)
+                        }
+                        None => {
+                            async_openai::types::ChatCompletionRequestUserMessageContent::Array(
+                                Vec::new(),
+                            )
+                        }
+                    },
+                    name: self.name,
+                },
+            ),
+            "system" => async_openai::types::ChatCompletionRequestMessage::System(
+                async_openai::types::ChatCompletionRequestSystemMessage {
+                    role: match self.role.as_ref() {
+                        "user" => async_openai::types::Role::User,
+                        "system" => async_openai::types::Role::System,
+                        "assistant" => async_openai::types::Role::Assistant,
+                        "function" => async_openai::types::Role::Function,
+                        role => panic!("unsupported role '{role}'"),
+                    },
+                    content: self
+                        .content
+                        .expect("system message content should be valid"),
+                    name: self.name,
+                },
+            ),
+            "assistant" => async_openai::types::ChatCompletionRequestMessage::Assistant(
+                async_openai::types::ChatCompletionRequestAssistantMessage {
+                    role: match self.role.as_ref() {
+                        "user" => async_openai::types::Role::User,
+                        "system" => async_openai::types::Role::System,
+                        "assistant" => async_openai::types::Role::Assistant,
+                        "function" => async_openai::types::Role::Function,
+                        role => panic!("unsupported role '{role}'"),
+                    },
+                    content: self.content,
+                    tool_calls: None,
+                    function_call: self
+                        .function_call
+                        .map(|fc| async_openai::types::FunctionCall {
+                            name: fc.name,
+                            arguments: fc.arguments,
+                        }),
+                    name: self.name,
+                },
+            ),
+            "function" => async_openai::types::ChatCompletionRequestMessage::Function(
+                async_openai::types::ChatCompletionRequestFunctionMessage {
+                    role: match self.role.as_ref() {
+                        "user" => async_openai::types::Role::User,
+                        "system" => async_openai::types::Role::System,
+                        "assistant" => async_openai::types::Role::Assistant,
+                        "function" => async_openai::types::Role::Function,
+                        role => panic!("unsupported role '{role}'"),
+                    },
+                    content: self.content,
+                    name: self.name.expect("function message name should be valid"),
+                },
+            ),
+            role => panic!("unsupported role '{role}'"),
         }
     }
 }
@@ -305,15 +360,58 @@ impl IntoChatCompletionRequestMessage for tiktoken_rs::ChatCompletionRequestMess
 impl IntoChatCompletionRequestMessage for async_openai::types::ChatCompletionRequestMessage {
     #[inline]
     fn into_tiktoken_rs(self) -> tiktoken_rs::ChatCompletionRequestMessage {
-        tiktoken_rs::ChatCompletionRequestMessage {
-            role: self.role.to_string(),
-            content: self.content,
-            function_call: self.function_call.map(|fc| tiktoken_rs::FunctionCall {
-                name: fc.name,
-                arguments: fc.arguments,
-            }),
-
-            name: self.name,
+        match self {
+            async_openai::types::ChatCompletionRequestMessage::User(message) => {
+                tiktoken_rs::ChatCompletionRequestMessage {
+                    role: message.role.to_string(),
+                    content: match message.content {
+                        async_openai::types::ChatCompletionRequestUserMessageContent::Text(
+                            text,
+                        ) => Some(text),
+                        async_openai::types::ChatCompletionRequestUserMessageContent::Array(
+                            array,
+                        ) => {
+                            if array.is_empty() {
+                                None
+                            } else {
+                                panic!("unsupported user message content {array:?}")
+                            }
+                        }
+                    },
+                    function_call: None,
+                    name: message.name,
+                }
+            }
+            async_openai::types::ChatCompletionRequestMessage::System(message) => {
+                tiktoken_rs::ChatCompletionRequestMessage {
+                    role: message.role.to_string(),
+                    content: Some(message.content),
+                    function_call: None,
+                    name: message.name,
+                }
+            }
+            async_openai::types::ChatCompletionRequestMessage::Assistant(message) => {
+                tiktoken_rs::ChatCompletionRequestMessage {
+                    role: message.role.to_string(),
+                    content: message.content,
+                    function_call: message.function_call.map(|fc| tiktoken_rs::FunctionCall {
+                        name: fc.name,
+                        arguments: fc.arguments,
+                    }),
+                    name: message.name,
+                }
+            }
+            async_openai::types::ChatCompletionRequestMessage::Function(message) => {
+                tiktoken_rs::ChatCompletionRequestMessage {
+                    role: message.role.to_string(),
+                    content: message.content,
+                    function_call: None,
+                    name: Some(message.name),
+                }
+            }
+            role @ async_openai::types::ChatCompletionRequestMessage::Tool(_) => {
+                panic!("unsupported role '{role:?}'")
+            }
         }
     }
 
@@ -333,19 +431,68 @@ impl IntoChatCompletionRequestMessage for async_openai::types::ChatCompletionRes
                 name: fc.name,
                 arguments: fc.arguments,
             }),
-
             name: None,
         }
     }
 
     #[inline]
     fn into_async_openai(self) -> async_openai::types::ChatCompletionRequestMessage {
-        async_openai::types::ChatCompletionRequestMessage {
-            role: self.role,
-            content: self.content,
-            function_call: self.function_call,
-
-            name: None,
+        match self.role {
+            async_openai::types::Role::User => {
+                async_openai::types::ChatCompletionRequestMessage::User(
+                    async_openai::types::ChatCompletionRequestUserMessage {
+                        role: self.role,
+                        content: match self.content {
+                            Some(text) => {
+                                async_openai::types::ChatCompletionRequestUserMessageContent::Text(
+                                    text,
+                                )
+                            }
+                            None => {
+                                async_openai::types::ChatCompletionRequestUserMessageContent::Array(
+                                    Vec::new(),
+                                )
+                            }
+                        },
+                        name: None,
+                    },
+                )
+            }
+            async_openai::types::Role::System => {
+                async_openai::types::ChatCompletionRequestMessage::System(
+                    async_openai::types::ChatCompletionRequestSystemMessage {
+                        role: self.role,
+                        content: self
+                            .content
+                            .expect("system message content should be valid"),
+                        name: None,
+                    },
+                )
+            }
+            async_openai::types::Role::Assistant => {
+                async_openai::types::ChatCompletionRequestMessage::Assistant(
+                    async_openai::types::ChatCompletionRequestAssistantMessage {
+                        role: self.role,
+                        content: self.content,
+                        tool_calls: None,
+                        function_call: self.function_call,
+                        name: None,
+                    },
+                )
+            }
+            async_openai::types::Role::Function => {
+                async_openai::types::ChatCompletionRequestMessage::Function(
+                    async_openai::types::ChatCompletionRequestFunctionMessage {
+                        role: self.role,
+                        content: self.content,
+                        name: self
+                            .function_call
+                            .expect("function message function call should be valid")
+                            .name,
+                    },
+                )
+            }
+            role @ async_openai::types::Role::Tool => panic!("unsupported role '{role}'"),
         }
     }
 }
