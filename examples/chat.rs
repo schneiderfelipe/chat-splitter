@@ -1,7 +1,9 @@
 use std::error::Error;
 
+use async_openai::types::ChatCompletionRequestAssistantMessageArgs;
 use async_openai::types::ChatCompletionRequestMessage;
-use async_openai::types::ChatCompletionRequestMessageArgs;
+use async_openai::types::ChatCompletionRequestSystemMessageArgs;
+use async_openai::types::ChatCompletionRequestUserMessageArgs;
 use async_openai::types::CreateChatCompletionRequestArgs;
 use async_openai::types::Role;
 use async_openai::Client;
@@ -16,10 +18,11 @@ const MAX_MESSAGES: usize = 16;
 async fn main() -> Result<(), Box<dyn Error>> {
     let mut stored_messages = get_stored_messages()?;
     stored_messages.push(
-        ChatCompletionRequestMessageArgs::default()
+        ChatCompletionRequestUserMessageArgs::default()
             .role(Role::User)
             .content("Where was it played?")
-            .build()?,
+            .build()?
+            .into(),
     );
     assert!(stored_messages.len() > MAX_MESSAGES);
 
@@ -28,10 +31,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .max_messages(MAX_MESSAGES)
         .split(&stored_messages);
 
-    let mut messages = vec![ChatCompletionRequestMessageArgs::default()
+    let mut messages = vec![ChatCompletionRequestSystemMessageArgs::default()
         .role(Role::System)
         .content("You are a helpful assistant.")
-        .build()?];
+        .build()?
+        .into()];
     messages.extend(recent_messages.iter().cloned());
     assert!(messages.len() <= MAX_MESSAGES + 1);
 
@@ -61,14 +65,16 @@ fn get_stored_messages() -> Result<Vec<ChatCompletionRequestMessage>, Box<dyn Er
     let mut messages = Vec::new();
     for _ in 0..2000 {
         messages.extend([
-            ChatCompletionRequestMessageArgs::default()
+            ChatCompletionRequestUserMessageArgs::default()
                 .role(Role::User)
                 .content("Who won the world series in 2020?")
-                .build()?,
-            ChatCompletionRequestMessageArgs::default()
+                .build()?
+                .into(),
+            ChatCompletionRequestAssistantMessageArgs::default()
                 .role(Role::Assistant)
                 .content("The Los Angeles Dodgers won the World Series in 2020.")
-                .build()?,
+                .build()?
+                .into(),
         ]);
     }
     Ok(messages)
