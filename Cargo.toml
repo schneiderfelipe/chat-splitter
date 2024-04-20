@@ -6,6 +6,19 @@ license = "MIT"
 
 authors = ["Felipe S. S. Schneider <schneider.felipe.5@gmail.com>"]
 description = "Never exceed OpenAI's chat models' maximum number of tokens when using the async_openai Rust crate"
+keywords = [
+  "ai",
+  "artificial-intelligence",
+  "chat",
+  "chatgpt",
+  "gpt-4",
+  "nlp",
+  "openai",
+  "split",
+  "text",
+  "tiktoken",
+  "tokenizer",
+]
 repository = "https://github.com/schneiderfelipe/chat-splitter"
 documentation = "https://docs.rs/chat-splitter"
 rust-version = "1.72.0"
